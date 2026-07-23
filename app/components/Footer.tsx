@@ -75,12 +75,21 @@ export default function Footer() {
               royaprivatemodelschool@gmail.com
             </span>
           </p>
+
+          <a
+            href="https://www.facebook.com/share/1D1QCMPLnt/?mibextid=wwXIfr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block mt-4 text-blue-400 hover:text-blue-300 transition font-semibold"
+          >
+            📘 تابع صفحة المدرسة على Facebook
+          </a>
         </div>
 
       </div>
 
       <div className="border-t border-slate-700 py-4 text-center text-gray-400">
-        © 2026 مدرسة رويا النموذجية للمتفوقين - جميع الحقوق محفوظة.
+        ©️ 2026 مدرسة رويا النموذجية للمتفوقين - جميع الحقوق محفوظة.
       </div>
     </footer>
   );
