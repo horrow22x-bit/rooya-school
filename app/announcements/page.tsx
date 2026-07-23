@@ -36,7 +36,7 @@ export default function AnnouncementsPage() {
           </h2>
 
           <Image
-            src="/image/pp.jpg"
+            src="/image/pp.jpeg"
             alt="إعلان جديد"
             width={1000}
             height={600}
