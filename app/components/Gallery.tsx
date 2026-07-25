@@ -5,6 +5,9 @@ import Image from "next/image";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+
 type GalleryImage = {
   id: string;
   image: string;
@@ -12,6 +15,7 @@ type GalleryImage = {
 
 export default function Gallery() {
   const [images, setImages] = useState<GalleryImage[]>([]);
+  const [index, setIndex] = useState(-1);
 
   useEffect(() => {
     const loadImages = async () => {
@@ -40,22 +44,32 @@ export default function Gallery() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {images.map((img) => (
+          {images.map((img, i) => (
             <div
               key={img.id}
-              className="group overflow-hidden rounded-2xl shadow-xl"
+              onClick={() => setIndex(i)}
+              className="group overflow-hidden rounded-2xl shadow-xl cursor-pointer"
             >
               <Image
                 src={img.image}
                 alt="صورة"
                 width={800}
                 height={600}
-                className="w-full h-72 object-cover transition-all duration-500 group-hover:scale-110"
                 unoptimized
+                className="w-full h-72 object-cover transition duration-500 group-hover:scale-110"
               />
             </div>
           ))}
         </div>
+
+        <Lightbox
+          open={index >= 0}
+          close={() => setIndex(-1)}
+          index={index}
+          slides={images.map((img) => ({
+            src: img.image,
+          }))}
+        />
       </div>
     </section>
   );
