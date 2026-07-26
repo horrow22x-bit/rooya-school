@@ -1,24 +1,59 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
-const images = [
-  "/image/hero.jpg.jpeg",
-  "/image/hero2.jpg",
-  "/image/yard.jpg.jpeg",
-  "/image/graduation.jpg",
-];
+type SliderImage = {
+  id: string;
+  image: string;
+};
 
 export default function HeroComponent() {
+  const [images, setImages] = useState<string[]>([]);
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
+    const loadSlider = async () => {
+      try {
+        const q = query(
+          collection(db, "slider"),
+          orderBy("createdAt", "desc")
+        );
+
+        const snapshot = await getDocs(q);
+
+        const data = snapshot.docs.map((doc) => {
+          const item = doc.data() as SliderImage;
+          return item.image;
+        });
+
+        setImages(data);
+      } catch (error) {
+        console.error("خطأ في تحميل السلايدر:", error);
+      }
+    };
+
+    loadSlider();
+  }, []);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+
     const interval = setInterval(() => {
-      nextSlide();
+      setCurrent((prev) => (prev + 1) % images.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [current]);
+  }, [images]);
+
+  if (images.length === 0) {
+    return (
+      <section className="h-screen flex items-center justify-center bg-slate-900 text-white">
+        جاري تحميل السلايدر...
+      </section>
+    );
+  }
 
   const nextSlide = () => {
     setCurrent((prev) => (prev + 1) % images.length);
@@ -43,7 +78,7 @@ export default function HeroComponent() {
       <div className="absolute inset-0 bg-black/60" />
 
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center text-white">
-        <h1 className="mb-6 animate-pulse text-5xl font-bold md:text-7xl">
+        <h1 className="mb-6 text-5xl font-bold md:text-7xl">
           مدرسة رويا النموذجية للمتفوقين
         </h1>
 
@@ -68,29 +103,26 @@ export default function HeroComponent() {
         </div>
       </div>
 
-      {/* زر السابق */}
       <button
         onClick={prevSlide}
-        className="absolute left-5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/20 p-3 text-3xl text-white transition hover:bg-white/40"
+        className="absolute left-5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/20 p-3 text-3xl text-white hover:bg-white/40"
       >
         ❮
       </button>
 
-      {/* زر التالي */}
       <button
         onClick={nextSlide}
-        className="absolute right-5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/20 p-3 text-3xl text-white transition hover:bg-white/40"
+        className="absolute right-5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/20 p-3 text-3xl text-white hover:bg-white/40"
       >
         ❯
       </button>
 
-      {/* نقاط التنقل */}
       <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-3">
         {images.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrent(index)}
-            className={`h-3 w-3 rounded-full transition ${
+            className={`h-3 w-3 rounded-full ${
               current === index ? "bg-white" : "bg-gray-400"
             }`}
           />

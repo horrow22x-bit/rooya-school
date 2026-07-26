@@ -23,11 +23,11 @@ export default function AdminNavbar() {
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-      <div className="flex items-center gap-3">
-        <h1 className="text-3xl font-bold">لوحة إدارة المدرسة</h1>
-      </div>
+      <h1 className="text-3xl font-bold">
+        لوحة إدارة المدرسة
+      </h1>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2 justify-center">
         <Link href="/admin" className={linkStyle("/admin")}>
           📰 الإعلانات
         </Link>
@@ -36,11 +36,15 @@ export default function AdminNavbar() {
           🖼️ المعرض
         </Link>
 
+        <Link href="/slider-admin" className={linkStyle("/slider-admin")}>
+          🎞️ السلايدر
+        </Link>
+
         <button
           onClick={logout}
           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold"
         >
-          تسجيل الخروج
+          🚪 تسجيل الخروج
         </button>
       </div>
     </div>
