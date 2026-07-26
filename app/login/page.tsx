@@ -25,7 +25,7 @@ export default function LoginPage() {
 
       alert("✅ تم تسجيل الدخول");
 
-      router.push("/admin");
+      router.push("/gallery-admin");
     } catch (error) {
       console.error(error);
       alert("❌ البريد الإلكتروني أو كلمة المرور غير صحيحة");
