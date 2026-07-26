@@ -13,6 +13,10 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: "مدرسة رويا النموذجية للمتفوقين",
   description: "الموقع الرسمي لمدرسة رويا النموذجية للمتفوقين",
+
+  verification: {
+    google: "Q9tU6SH3_P0ohbces9hI4qLShPrTTIm46AV9wN4W_Sk",
+  },
 };
 
 export default function RootLayout({
@@ -23,7 +27,6 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={cairo.className}>
       <body className="min-h-screen flex flex-col bg-slate-950">
-
         <Navbar />
 
         <main className="flex-1 pt-24">
@@ -31,7 +34,6 @@ export default function RootLayout({
         </main>
 
         <Footer />
-
       </body>
     </html>
   );
