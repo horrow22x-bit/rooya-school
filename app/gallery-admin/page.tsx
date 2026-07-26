@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { useRouter } from "next/navigation";
 
 import GalleryForm from "./GalleryForm";
 import GalleryList from "./GalleryList";
+import AdminNavbar from "../components/AdminNavbar";
 
 export default function GalleryAdminPage() {
   const router = useRouter();
@@ -30,42 +31,25 @@ export default function GalleryAdminPage() {
     setRefresh((prev) => !prev);
   };
 
-  const logout = async () => {
-    try {
-      await signOut(auth);
-      router.replace("/login");
-    } catch (error) {
-      console.error(error);
-      alert("حدث خطأ أثناء تسجيل الخروج");
-    }
-  };
-
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <h1 className="text-2xl font-bold">جاري التحقق...</h1>
+        <h1 className="text-2xl font-bold">
+          جاري التحقق من تسجيل الدخول...
+        </h1>
       </main>
     );
   }
 
   return (
-    <main className="max-w-6xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">
-          إدارة معرض الصور
-        </h1>
+    <main className="min-h-screen bg-slate-100 pt-28 px-6">
+      <div className="max-w-6xl mx-auto">
+        <AdminNavbar />
 
-        <button
-          onClick={logout}
-          className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold transition"
-        >
-          تسجيل الخروج
-        </button>
+        <GalleryForm onAdded={reload} />
+
+        <GalleryList refresh={refresh} />
       </div>
-
-      <GalleryForm onAdded={reload} />
-
-      <GalleryList refresh={refresh} />
     </main>
   );
 }
