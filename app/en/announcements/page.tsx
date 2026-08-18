@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db } from "../../lib/firebase";
 
 type Announcement = {
   id: string;
-  titleAr: string;
-  descriptionAr: string;
+  titleEn: string;
+  descriptionEn: string;
   date: string;
 };
 
@@ -31,26 +31,22 @@ export default function AnnouncementsPage() {
           if (item.createdAt instanceof Timestamp) {
             date = item.createdAt
               .toDate()
-              .toLocaleDateString("ar-SA");
+              .toLocaleDateString("en-US");
           } else if (typeof item.date === "string") {
             date = item.date;
           }
 
           return {
             id: doc.id,
-            titleAr: item.titleAr || item.title || "",
-            descriptionAr:
-              item.descriptionAr || item.description || "",
+            titleEn: item.titleEn || "",
+            descriptionEn: item.descriptionEn || "",
             date,
           };
         });
 
         setAnnouncements(data);
       } catch (error) {
-        console.error(
-          "Failed to load announcements:",
-          error
-        );
+        console.error("Failed to load announcements:", error);
       } finally {
         setLoading(false);
       }
@@ -61,7 +57,7 @@ export default function AnnouncementsPage() {
 
   return (
     <main
-      dir="rtl"
+      dir="ltr"
       className="min-h-screen bg-slate-950"
     >
       {/* Header */}
@@ -69,12 +65,12 @@ export default function AnnouncementsPage() {
         <div className="max-w-6xl mx-auto px-6 text-center">
 
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            الإعلانات والأخبار
+            News & Announcements
           </h1>
 
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            تابع آخر الأخبار والأنشطة والإعلانات
-            في مدرسة رويا النموذجية للمتفوقين.
+            Follow the latest news, activities and
+            announcements from Roya Model School.
           </p>
 
         </div>
@@ -86,7 +82,7 @@ export default function AnnouncementsPage() {
 
           {loading ? (
             <div className="text-center text-slate-700 text-xl">
-              جاري تحميل الإعلانات...
+              Loading announcements...
             </div>
           ) : announcements.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
@@ -96,11 +92,11 @@ export default function AnnouncementsPage() {
               </div>
 
               <h2 className="text-2xl font-bold text-slate-900 mb-3">
-                لا توجد إعلانات حاليًا
+                No announcements available
               </h2>
 
               <p className="text-gray-600">
-                ستظهر الإعلانات الجديدة هنا قريبًا.
+                New announcements will appear here soon.
               </p>
 
             </div>
@@ -120,11 +116,11 @@ export default function AnnouncementsPage() {
                   )}
 
                   <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                    {announcement.titleAr}
+                    {announcement.titleEn}
                   </h2>
 
-                  <p className="text-gray-600 leading-8">
-                    {announcement.descriptionAr}
+                  <p className="text-gray-600 leading-7">
+                    {announcement.descriptionEn}
                   </p>
 
                 </article>
@@ -140,10 +136,10 @@ export default function AnnouncementsPage() {
       <section className="bg-slate-950 py-12 text-center">
 
         <Link
-          href="/"
+          href="/en"
           className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl transition"
         >
-          العودة إلى الرئيسية
+          Back to Home
         </Link>
 
       </section>

@@ -1,189 +1,154 @@
 "use client";
 
 import { useState } from "react";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
 
 type Props = {
   onAdded: () => void;
 };
 
 export default function AnnouncementForm({ onAdded }: Props) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [image, setImage] = useState("");
-  const [publicId, setPublicId] = useState("");
-  const [date, setDate] = useState("");
+  const [titleAr, setTitleAr] = useState("");
+  const [descriptionAr, setDescriptionAr] = useState("");
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [titleEn, setTitleEn] = useState("");
+  const [descriptionEn, setDescriptionEn] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
-  const uploadImage = async () => {
-    if (!selectedFile) {
-      alert("يرجى اختيار صورة");
-      return null;
-    }
-
-    try {
-      setUploading(true);
-
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "فشل رفع الصورة");
-      }
-
-      setImage(data.url);
-      setPublicId(data.publicId);
-
-      return {
-        url: data.url,
-        publicId: data.publicId,
-      };
-    } catch (error) {
-      console.error(error);
-      alert("❌ فشل رفع الصورة");
-      return null;
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const publishAnnouncement = async () => {
-    if (!title || !description || !date) {
-      alert("يرجى ملء جميع الحقول");
+  const addAnnouncement = async () => {
+    if (!titleAr || !descriptionAr || !titleEn || !descriptionEn) {
+      alert("يرجى تعبئة جميع الحقول");
       return;
     }
 
     try {
       setLoading(true);
 
-      let imageUrl = image;
-      let imagePublicId = publicId;
-
-      if (!imageUrl) {
-        const uploaded = await uploadImage();
-
-        if (!uploaded) {
-          setLoading(false);
-          return;
-        }
-
-        imageUrl = uploaded.url;
-        imagePublicId = uploaded.publicId;
-      }await addDoc(collection(db, "announcements"), {
-        title,
-        description,
-        image: imageUrl,
-        publicId: imagePublicId,
-        date,
+      await addDoc(collection(db, "announcements"), {
+        titleAr,
+        descriptionAr,
+        titleEn,
+        descriptionEn,
+        createdAt: serverTimestamp(),
       });
 
-      alert("✅ تم نشر الإعلان بنجاح");
+      alert("تمت إضافة الإعلان بنجاح");
 
-      setTitle("");
-      setDescription("");
-      setImage("");
-      setPublicId("");
-      setDate("");
-      setSelectedFile(null);
+      setTitleAr("");
+      setDescriptionAr("");
+      setTitleEn("");
+      setDescriptionEn("");
 
       onAdded();
     } catch (error) {
       console.error(error);
-      alert("❌ حدث خطأ أثناء حفظ الإعلان");
+      alert("حدث خطأ أثناء إضافة الإعلان");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-      <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
+    <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 md:p-10">
+
+      {/* العنوان */}
+      <h2 className="text-3xl md:text-4xl font-extrabold text-slate-950 mb-10">
         إضافة إعلان جديد
       </h2>
 
-      <label className="block mb-2 font-semibold text-gray-800">
-        عنوان الإعلان
-      </label>
-
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-       className="w-full border border-gray-300 rounded-lg p-3 mb-6 text-gray-900 placeholder:text-gray-500"
-        placeholder="عنوان الإعلان"
-      />
-
-      <label className="block mb-2 font-semibold">
-        وصف الإعلان
-      </label>
-
-      <textarea
-        rows={5}
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="w-full border rounded-lg p-3 mb-6"
-        placeholder="وصف الإعلان"
-      />
-
-      <label className="block mb-2 font-semibold">
-        صورة الإعلان
-      </label>
-
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          if (e.target.files && e.target.files.length > 0) {
-            setSelectedFile(e.target.files[0]);
-          }
-        }}
-       className="w-full border border-gray-300 rounded-lg p-3 mb-6 text-gray-900 placeholder:text-gray-500"
-      />
-
-      {selectedFile && (
-        <img
-          src={URL.createObjectURL(selectedFile)}
-          alt="Preview"
-          className="w-48 rounded-lg mb-6 border"
-        />
-      )}
-
-      {uploading && (
-        <p className="text-blue-600 mb-6">
-          جاري رفع الصورة...
-        </p>
-      )}
-
-      <label className="block mb-2 font-semibold">
-        تاريخ الإعلان
-      </label>
-
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        className="w-full border border-gray-300 rounded-lg p-3 mb-8 text-gray-900"
-      />
-
-      <button
-        onClick={publishAnnouncement}
-        disabled={loading || uploading}
-        className="w-full bg-blue-700 hover:bg-blue-800 disabled:bg-gray-400 text-white py-3 rounded-lg text-lg font-bold transition"
+      {/* ================= العربية ================= */}
+      <div
+        dir="rtl"
+        className="border-b-2 border-slate-200 pb-10 mb-10"
       >
-        {loading ? "جاري النشر..." : "نشر الإعلان"}
+        <h3 className="text-2xl md:text-3xl font-extrabold text-blue-700 mb-8">
+          🇸🇦 الإعلان بالعربية
+        </h3>
+
+        {/* عنوان الإعلان */}
+        <div className="mb-7">
+          <label className="block text-xl md:text-2xl font-extrabold text-slate-950 mb-3">
+            عنوان الإعلان
+            <span className="text-red-600 mr-1">*</span>
+          </label>
+
+          <input
+            type="text"
+            value={titleAr}
+            onChange={(e) => setTitleAr(e.target.value)}
+            className="w-full min-h-[64px] border-2 border-slate-300 bg-white text-slate-950 text-xl md:text-2xl font-semibold rounded-xl px-5 py-4 outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 placeholder:text-slate-500 placeholder:font-medium"
+            placeholder="اكتب عنوان الإعلان بالعربية"
+          />
+        </div>
+
+        {/* وصف الإعلان */}
+        <div>
+          <label className="block text-xl md:text-2xl font-extrabold text-slate-950 mb-3">
+            وصف الإعلان
+            <span className="text-red-600 mr-1">*</span>
+          </label>
+
+          <textarea
+            value={descriptionAr}
+            onChange={(e) => setDescriptionAr(e.target.value)}
+            rows={7}
+            className="w-full border-2 border-slate-300 bg-white text-slate-950 text-xl md:text-2xl font-semibold rounded-xl px-5 py-4 outline-none resize-y focus:border-blue-600 focus:ring-4 focus:ring-blue-100 placeholder:text-slate-500 placeholder:font-medium"
+            placeholder="اكتب وصف الإعلان بالعربية"
+          />
+        </div>
+      </div>
+
+      {/* ================= English ================= */}
+      <div dir="ltr">
+        <h3 className="text-2xl md:text-3xl font-extrabold text-blue-700 mb-8">
+          🇬🇧 English Announcement
+        </h3>
+
+        {/* Announcement Title */}
+        <div className="mb-7">
+          <label className="block text-xl md:text-2xl font-extrabold text-slate-950 mb-3">
+            Announcement Title
+            <span className="text-red-600 ml-1">*</span>
+          </label>
+
+          <input
+            type="text"
+            value={titleEn}
+            onChange={(e) => setTitleEn(e.target.value)}
+            className="w-full min-h-[64px] border-2 border-slate-300 bg-white text-slate-950 text-xl md:text-2xl font-semibold rounded-xl px-5 py-4 outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 placeholder:text-slate-500 placeholder:font-medium"
+            placeholder="Write the announcement title in English"
+          />
+        </div>
+
+        {/* Announcement Description */}
+        <div>
+          <label className="block text-xl md:text-2xl font-extrabold text-slate-950 mb-3">
+            Announcement Description
+            <span className="text-red-600 ml-1">*</span>
+          </label>
+
+          <textarea
+            value={descriptionEn}
+            onChange={(e) => setDescriptionEn(e.target.value)}
+            rows={7}
+            className="w-full border-2 border-slate-300 bg-white text-slate-950 text-xl md:text-2xl font-semibold rounded-xl px-5 py-4 outline-none resize-y focus:border-blue-600 focus:ring-4 focus:ring-blue-100 placeholder:text-slate-500 placeholder:font-medium"
+            placeholder="Write the announcement description in English"
+          />
+        </div>
+      </div>
+
+      {/* ================= زر الحفظ ================= */}
+      <button
+        type="button"
+        onClick={addAnnouncement}
+        disabled={loading}
+        className="w-full mt-10 min-h-[68px] bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xl md:text-2xl font-extrabold rounded-xl shadow-lg transition disabled:bg-slate-400 disabled:cursor-not-allowed"
+      >
+        {loading ? "جاري حفظ الإعلان..." : "💾 حفظ الإعلان"}
       </button>
+
     </div>
   );
 }

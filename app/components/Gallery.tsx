@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
@@ -17,50 +18,71 @@ export default function Gallery() {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [index, setIndex] = useState(-1);
 
+  const pathname = usePathname();
+  const isEnglish = pathname.startsWith("/en");
+
   useEffect(() => {
     const loadImages = async () => {
-      const snapshot = await getDocs(collection(db, "gallery"));
+      try {
+        const snapshot = await getDocs(collection(db, "gallery"));
 
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        image: doc.data().image,
-      }));
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          image: doc.data().image,
+        }));
 
-      setImages(data);
+        setImages(data);
+      } catch (error) {
+        console.error("Gallery loading error:", error);
+      }
     };
 
     loadImages();
   }, []);
 
   return (
-    <section className="bg-slate-900 py-20">
+    <section
+      className="bg-slate-900 py-20"
+      dir={isEnglish ? "ltr" : "rtl"}
+    >
       <div className="max-w-7xl mx-auto px-6">
+
         <h2 className="text-4xl font-bold text-center text-white mb-4">
-          معرض الصور
+          {isEnglish ? "Photo Gallery" : "معرض الصور"}
         </h2>
 
         <p className="text-center text-gray-400 mb-12">
-          جولة داخل مدرسة رويا النموذجية للمتفوقين
+          {isEnglish
+            ? "A tour inside Roya Model School for Outstanding Students"
+            : "جولة داخل مدرسة رويا النموذجية للمتفوقين"}
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {images.map((img, i) => (
-            <div
-              key={img.id}
-              onClick={() => setIndex(i)}
-              className="group overflow-hidden rounded-2xl shadow-xl cursor-pointer"
-            >
-              <Image
-                src={img.image}
-                alt="صورة"
-                width={800}
-                height={600}
-                unoptimized
-                className="w-full h-72 object-cover transition duration-500 group-hover:scale-110"
-              />
-            </div>
-          ))}
-        </div>
+        {images.length === 0 ? (
+          <p className="text-center text-gray-400">
+            {isEnglish
+              ? "No photos available yet."
+              : "لا توجد صور حاليًا."}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {images.map((img, i) => (
+              <div
+                key={img.id}
+                onClick={() => setIndex(i)}
+                className="group overflow-hidden rounded-2xl shadow-xl cursor-pointer"
+              >
+                <Image
+                  src={img.image}
+                  alt={isEnglish ? "Roya School photo" : "صورة من المدرسة"}
+                  width={800}
+                  height={600}
+                  unoptimized
+                  className="w-full h-72 object-cover transition duration-500 group-hover:scale-110"
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         <Lightbox
           open={index >= 0}
