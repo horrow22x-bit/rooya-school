@@ -1,42 +1,60 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../lib/firebase";
+import { useRouter } from "next/navigation";
+
+import AdminNavbar from "../components/AdminNavbar";
 import GalleryForm from "./GalleryForm";
 import GalleryList from "./GalleryList";
-import AdminNavbar from "../components/AdminNavbar";
 
 export default function GalleryAdminPage() {
+  const router = useRouter();
+
+  const [loading, setLoading] = useState(true);
+  const [refresh, setRefresh] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.replace("/login");
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  const handleRefresh = () => {
+    setRefresh((prev) => prev + 1);
+  };
+
+  if (loading) {
+    return (
+      <main
+        dir="rtl"
+        className="min-h-screen flex items-center justify-center bg-slate-100"
+      >
+        <h1 className="text-2xl font-bold text-slate-900">
+          جاري التحقق من تسجيل الدخول...
+        </h1>
+      </main>
+    );
+  }
+
   return (
     <main
       dir="rtl"
-      className="min-h-screen bg-slate-100 pt-28 pb-20"
+      className="min-h-screen bg-slate-100 pt-28 px-4 md:px-6"
     >
-      <div className="max-w-7xl mx-auto px-6">
-
+      <div className="max-w-6xl mx-auto">
         <AdminNavbar />
 
-        {/* عنوان الصفحة */}
-        <div className="bg-white rounded-3xl shadow-lg p-8 mb-8">
+        <GalleryForm onAdded={handleRefresh} />
 
-          <h1 className="text-4xl md:text-5xl font-extrabold text-slate-950 mb-4">
-            إدارة معرض الصور
-          </h1>
-
-          <p className="text-xl md:text-2xl font-bold text-slate-800">
-            إضافة الصور وإدارة معرض المدرسة
-          </p>
-
-        </div>
-
-        {/* إضافة الصور */}
-        <div className="mb-10">
-          <GalleryForm />
-        </div>
-
-        {/* الصور الموجودة */}
-        <div>
-          <GalleryList />
-        </div>
-
+        <GalleryList refresh={refresh} />
       </div>
     </main>
   );
