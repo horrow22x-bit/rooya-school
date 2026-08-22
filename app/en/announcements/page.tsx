@@ -2,18 +2,26 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { collection, getDocs, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "../../lib/firebase";
 
 type Announcement = {
   id: string;
   titleEn: string;
   descriptionEn: string;
+  image: string;
   date: string;
 };
 
 export default function AnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcements, setAnnouncements] = useState<
+    Announcement[]
+  >([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,15 +46,24 @@ export default function AnnouncementsPage() {
 
           return {
             id: doc.id,
+
             titleEn: item.titleEn || "",
-            descriptionEn: item.descriptionEn || "",
+
+            descriptionEn:
+              item.descriptionEn || "",
+
+            image: item.image || "",
+
             date,
           };
         });
 
         setAnnouncements(data);
       } catch (error) {
-        console.error("Failed to load announcements:", error);
+        console.error(
+          "Failed to load announcements:",
+          error
+        );
       } finally {
         setLoading(false);
       }
@@ -106,22 +123,38 @@ export default function AnnouncementsPage() {
               {announcements.map((announcement) => (
                 <article
                   key={announcement.id}
-                  className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl hover:-translate-y-1 transition duration-300"
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition duration-300"
                 >
 
-                  {announcement.date && (
-                    <div className="text-blue-600 font-semibold mb-3">
-                      {announcement.date}
-                    </div>
+                  {/* Announcement Image */}
+                  {announcement.image && (
+                    <img
+                      src={announcement.image}
+                      alt={announcement.titleEn}
+                      className="w-full h-56 object-cover"
+                    />
                   )}
 
-                  <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                    {announcement.titleEn}
-                  </h2>
+                  <div className="p-6">
 
-                  <p className="text-gray-600 leading-7">
-                    {announcement.descriptionEn}
-                  </p>
+                    {/* Date */}
+                    {announcement.date && (
+                      <div className="text-blue-600 font-semibold mb-3">
+                        {announcement.date}
+                      </div>
+                    )}
+
+                    {/* Title */}
+                    <h2 className="text-2xl font-bold text-slate-900 mb-4">
+                      {announcement.titleEn}
+                    </h2>
+
+                    {/* Description */}
+                    <p className="text-gray-600 leading-7">
+                      {announcement.descriptionEn}
+                    </p>
+
+                  </div>
 
                 </article>
               ))}

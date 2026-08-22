@@ -1,100 +1,77 @@
-import { v2 as cloudinary } from "cloudinary";
 import { NextResponse } from "next/server";
-import { Buffer } from "node:buffer";
+import crypto from "crypto";
 
 export const runtime = "nodejs";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "لم يتم اختيار صورة.",
-        },
+        { error: "لم يتم اختيار صورة" },
         { status: 400 }
       );
     }
 
-    // الحد الأقصى 15 ميغابايت
-    const maxSize = 15 * 1024 * 1024;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-    if (file.size > maxSize) {
+    if (!cloudName || !apiKey || !apiSecret) {
+      return NextResponse.json(
+        { error: "إعدادات Cloudinary غير موجودة" },
+        { status: 500 }
+      );
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    const signature = crypto
+      .createHash("sha1")
+      .update(`timestamp=${timestamp}${apiSecret}`)
+      .digest("hex");
+
+    const uploadData = new FormData();
+
+    uploadData.append("file", file);
+    uploadData.append("api_key", apiKey);
+    uploadData.append("timestamp", timestamp.toString());
+    uploadData.append("signature", signature);
+
+    const cloudinaryResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: "POST",
+        body: uploadData,
+      }
+    );
+
+    const result = await cloudinaryResponse.json();
+
+    if (!cloudinaryResponse.ok) {
+      console.error("Cloudinary error:", result);
+
       return NextResponse.json(
         {
-          success: false,
-          error: "حجم الصورة كبير جدًا. الحد الأقصى 15 ميغابايت.",
+          error:
+            result?.error?.message ||
+            "فشل رفع الصورة إلى Cloudinary",
         },
-        { status: 400 }
+        { status: 500 }
       );
     }
-
-    // التأكد أن الملف صورة
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "الملف المختار ليس صورة.",
-        },
-        { status: 400 }
-      );
-    }
-
-    console.log("Upload started:", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    });
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const result: any = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: "roya-school",
-          resource_type: "image",
-        },
-        (error, result) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result);
-          }
-        }
-      );
-
-      uploadStream.end(buffer);
-    });
-
-    console.log("Upload successful:", result.secure_url);
 
     return NextResponse.json({
-      success: true,
       url: result.secure_url,
       publicId: result.public_id,
     });
-  } catch (error: any) {
-    console.error("Cloudinary Upload Error:", error);
+  } catch (error) {
+    console.error("Upload error:", error);
 
     return NextResponse.json(
-      {
-        success: false,
-        error:
-          error?.message ||
-          error?.error?.message ||
-          "حدث خطأ أثناء رفع الصورة إلى Cloudinary.",
-      },
+      { error: "حدث خطأ أثناء رفع الصورة" },
       { status: 500 }
     );
   }

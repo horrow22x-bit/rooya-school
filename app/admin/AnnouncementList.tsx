@@ -16,10 +16,16 @@ type Props = {
 
 type Announcement = {
   id: string;
+
   titleAr: string;
   descriptionAr: string;
+
   titleEn: string;
   descriptionEn: string;
+
+  image?: string;
+  publicId?: string;
+  date?: string;
 };
 
 export default function AnnouncementList({ refresh }: Props) {
@@ -32,6 +38,10 @@ export default function AnnouncementList({ refresh }: Props) {
   const [titleEn, setTitleEn] = useState("");
   const [descriptionEn, setDescriptionEn] = useState("");
 
+  // =========================
+  // تحميل الإعلانات
+  // =========================
+
   const loadAnnouncements = async () => {
     try {
       const snapshot = await getDocs(
@@ -43,23 +53,35 @@ export default function AnnouncementList({ refresh }: Props) {
 
         return {
           id: item.id,
+
           titleAr: data.titleAr || data.title || "",
-          descriptionAr: data.descriptionAr || data.description || "",
+          descriptionAr:
+            data.descriptionAr || data.description || "",
+
           titleEn: data.titleEn || "",
           descriptionEn: data.descriptionEn || "",
+
+          image: data.image || "",
+          publicId: data.publicId || "",
+          date: data.date || "",
         };
       });
 
       setAnnouncements(data);
     } catch (error) {
-      console.error(error);
-      alert("فشل تحميل الإعلانات");
+      console.error("Load announcements error:", error);
+
+      alert("❌ فشل تحميل الإعلانات");
     }
   };
 
   useEffect(() => {
     loadAnnouncements();
   }, [refresh]);
+
+  // =========================
+  // بدء التعديل
+  // =========================
 
   const startEdit = (announcement: Announcement) => {
     setEditingId(announcement.id);
@@ -71,6 +93,10 @@ export default function AnnouncementList({ refresh }: Props) {
     setDescriptionEn(announcement.descriptionEn);
   };
 
+  // =========================
+  // إلغاء التعديل
+  // =========================
+
   const cancelEdit = () => {
     setEditingId(null);
 
@@ -81,53 +107,120 @@ export default function AnnouncementList({ refresh }: Props) {
     setDescriptionEn("");
   };
 
+  // =========================
+  // حفظ التعديل
+  // =========================
+
   const saveEdit = async () => {
     if (
-      !titleAr ||
-      !descriptionAr ||
-      !titleEn ||
-      !descriptionEn
+      !titleAr.trim() ||
+      !descriptionAr.trim() ||
+      !titleEn.trim() ||
+      !descriptionEn.trim()
     ) {
-      alert("يرجى تعبئة جميع الحقول");
+      alert("⚠️ يرجى تعبئة جميع الحقول");
+
       return;
     }
 
     if (!editingId) return;
 
     try {
-      await updateDoc(doc(db, "announcements", editingId), {
-        titleAr,
-        descriptionAr,
-        titleEn,
-        descriptionEn,
-      });
+      await updateDoc(
+        doc(db, "announcements", editingId),
+        {
+          titleAr: titleAr.trim(),
+          descriptionAr: descriptionAr.trim(),
 
-      alert("تم تعديل الإعلان بنجاح");
+          titleEn: titleEn.trim(),
+          descriptionEn: descriptionEn.trim(),
+        }
+      );
+
+      alert("✅ تم تعديل الإعلان بنجاح");
 
       cancelEdit();
-      loadAnnouncements();
+
+      await loadAnnouncements();
     } catch (error) {
-      console.error(error);
-      alert("فشل تعديل الإعلان");
+      console.error("Update announcement error:", error);
+
+      alert("❌ فشل تعديل الإعلان");
     }
   };
 
-  const deleteAnnouncement = async (id: string) => {
-    if (!confirm("هل تريد حذف هذا الإعلان؟")) {
-      return;
-    }
+  // =========================
+  // حذف الإعلان
+  // =========================
+
+  const deleteAnnouncement = async (
+    announcement: Announcement
+  ) => {
+    const confirmed = confirm(
+      "هل تريد حذف هذا الإعلان؟"
+    );
+
+    if (!confirmed) return;
 
     try {
-      await deleteDoc(doc(db, "announcements", id));
+      // -------------------------
+      // حذف الصورة من Cloudinary
+      // -------------------------
 
-      alert("تم حذف الإعلان");
+      if (announcement.publicId) {
+        try {
+          const response = await fetch(
+            "/api/delete-image",
+            {
+              method: "POST",
 
-      loadAnnouncements();
+              headers: {
+                "Content-Type": "application/json",
+              },
+
+              body: JSON.stringify({
+                publicId: announcement.publicId,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            console.warn(
+              "تعذر حذف الصورة من Cloudinary"
+            );
+          }
+        } catch (imageError) {
+          console.error(
+            "Image delete error:",
+            imageError
+          );
+        }
+      }
+
+      // -------------------------
+      // حذف الإعلان من Firestore
+      // -------------------------
+
+      await deleteDoc(
+        doc(db, "announcements", announcement.id)
+      );
+
+      alert("✅ تم حذف الإعلان");
+
+      await loadAnnouncements();
     } catch (error) {
-      console.error(error);
-      alert("فشل حذف الإعلان");
+      console.error(
+        "Delete announcement error:",
+        error
+      );
+
+      alert("❌ فشل حذف الإعلان");
     }
   };
+
+  // =========================
+  // الواجهة
+  // =========================
 
   return (
     <div className="space-y-6">
@@ -146,22 +239,31 @@ export default function AnnouncementList({ refresh }: Props) {
           >
 
             {editingId === announcement.id ? (
-              /* ================= EDIT ================= */
+              // ==================================================
+              // EDIT
+              // ==================================================
+
               <div>
 
                 <h2 className="text-2xl font-bold mb-6">
                   تعديل الإعلان
                 </h2>
 
-                {/* Arabic */}
-                <div className="border-b pb-6 mb-6">
+                {/* ================= العربية ================= */}
+
+                <div
+                  className="border-b pb-6 mb-6"
+                  dir="rtl"
+                >
                   <h3 className="text-xl font-bold text-blue-700 mb-4">
                     🇸🇦 العربية
                   </h3>
 
                   <input
                     value={titleAr}
-                    onChange={(e) => setTitleAr(e.target.value)}
+                    onChange={(e) =>
+                      setTitleAr(e.target.value)
+                    }
                     className="w-full border rounded-lg p-3 mb-4"
                     placeholder="عنوان الإعلان بالعربية"
                     dir="rtl"
@@ -170,7 +272,9 @@ export default function AnnouncementList({ refresh }: Props) {
                   <textarea
                     value={descriptionAr}
                     onChange={(e) =>
-                      setDescriptionAr(e.target.value)
+                      setDescriptionAr(
+                        e.target.value
+                      )
                     }
                     className="w-full border rounded-lg p-3"
                     rows={5}
@@ -179,15 +283,21 @@ export default function AnnouncementList({ refresh }: Props) {
                   />
                 </div>
 
-                {/* English */}
-                <div className="mb-6">
+                {/* ================= English ================= */}
+
+                <div
+                  className="mb-6"
+                  dir="ltr"
+                >
                   <h3 className="text-xl font-bold text-blue-700 mb-4">
                     🇬🇧 English
                   </h3>
 
                   <input
                     value={titleEn}
-                    onChange={(e) => setTitleEn(e.target.value)}
+                    onChange={(e) =>
+                      setTitleEn(e.target.value)
+                    }
                     className="w-full border rounded-lg p-3 mb-4"
                     placeholder="Announcement title in English"
                     dir="ltr"
@@ -196,7 +306,9 @@ export default function AnnouncementList({ refresh }: Props) {
                   <textarea
                     value={descriptionEn}
                     onChange={(e) =>
-                      setDescriptionEn(e.target.value)
+                      setDescriptionEn(
+                        e.target.value
+                      )
                     }
                     className="w-full border rounded-lg p-3"
                     rows={5}
@@ -205,16 +317,20 @@ export default function AnnouncementList({ refresh }: Props) {
                   />
                 </div>
 
+                {/* ================= Buttons ================= */}
+
                 <div className="flex gap-3">
 
                   <button
+                    type="button"
                     onClick={saveEdit}
                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold"
                   >
-                    حفظ التعديل
+                    💾 حفظ التعديل
                   </button>
 
                   <button
+                    type="button"
                     onClick={cancelEdit}
                     className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-bold"
                   >
@@ -224,11 +340,30 @@ export default function AnnouncementList({ refresh }: Props) {
                 </div>
 
               </div>
+
             ) : (
-              /* ================= VIEW ================= */
+              // ==================================================
+              // VIEW
+              // ==================================================
+
               <div>
 
-                {/* Arabic */}
+                {/* ================= الصورة ================= */}
+
+                {announcement.image && (
+                  <img
+                    src={announcement.image}
+                    alt={
+                      announcement.titleAr ||
+                      announcement.titleEn ||
+                      "Announcement"
+                    }
+                    className="w-full h-64 object-cover rounded-xl mb-6"
+                  />
+                )}
+
+                {/* ================= العربية ================= */}
+
                 <div
                   className="border-b pb-5 mb-5"
                   dir="rtl"
@@ -242,7 +377,8 @@ export default function AnnouncementList({ refresh }: Props) {
                   </p>
                 </div>
 
-                {/* English */}
+                {/* ================= English ================= */}
+
                 <div
                   className="border-b pb-5 mb-5"
                   dir="ltr"
@@ -256,23 +392,38 @@ export default function AnnouncementList({ refresh }: Props) {
                   </p>
                 </div>
 
-                {/* Buttons */}
+                {/* ================= التاريخ ================= */}
+
+                {announcement.date && (
+                  <p className="text-gray-500 mb-5">
+                    {announcement.date}
+                  </p>
+                )}
+
+                {/* ================= Buttons ================= */}
+
                 <div className="flex gap-3">
 
                   <button
-                    onClick={() => startEdit(announcement)}
+                    type="button"
+                    onClick={() =>
+                      startEdit(announcement)
+                    }
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold"
                   >
-                    تعديل
+                    ✏️ تعديل
                   </button>
 
                   <button
+                    type="button"
                     onClick={() =>
-                      deleteAnnouncement(announcement.id)
+                      deleteAnnouncement(
+                        announcement
+                      )
                     }
                     className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-bold"
                   >
-                    حذف
+                    🗑️ حذف
                   </button>
 
                 </div>

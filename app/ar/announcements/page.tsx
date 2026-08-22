@@ -8,12 +8,12 @@ import {
   Timestamp,
 } from "firebase/firestore";
 
-import { db } from "../lib/firebase";
+import { db } from "../../lib/firebase";
 
 type Announcement = {
   id: string;
-  titleEn: string;
-  descriptionEn: string;
+  titleAr: string;
+  descriptionAr: string;
   image: string;
   date: string;
 };
@@ -37,7 +37,7 @@ export default function AnnouncementsPage() {
           if (announcement.createdAt instanceof Timestamp) {
             date = announcement.createdAt
               .toDate()
-              .toLocaleDateString("en-US");
+              .toLocaleDateString("ar-SA");
           } else if (typeof announcement.date === "string") {
             date = announcement.date;
           }
@@ -45,13 +45,13 @@ export default function AnnouncementsPage() {
           return {
             id: item.id,
 
-            titleEn:
-              announcement.titleEn ||
+            titleAr:
+              announcement.titleAr ||
               announcement.title ||
               "",
 
-            descriptionEn:
-              announcement.descriptionEn ||
+            descriptionAr:
+              announcement.descriptionAr ||
               announcement.description ||
               "",
 
@@ -67,7 +67,7 @@ export default function AnnouncementsPage() {
         setAnnouncements(data);
       } catch (error) {
         console.error(
-          "Failed to load announcements:",
+          "Failed to load Arabic announcements:",
           error
         );
       } finally {
@@ -80,34 +80,33 @@ export default function AnnouncementsPage() {
 
   return (
     <main
-      dir="ltr"
+      dir="rtl"
       className="min-h-screen bg-slate-950"
     >
-      {/* Header */}
+      {/* ================= HEADER ================= */}
 
       <section className="bg-slate-900 pt-40 pb-20">
         <div className="max-w-6xl mx-auto px-6 text-center">
 
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            News & Announcements
+            آخر الأخبار والإعلانات
           </h1>
 
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Follow the latest news, activities and
-            announcements from Roya Model School.
+            تابع آخر أخبار وفعاليات وإعلانات مدرسة رويا النموذجية.
           </p>
 
         </div>
       </section>
 
-      {/* Announcements */}
+      {/* ================= ANNOUNCEMENTS ================= */}
 
       <section className="bg-slate-100 py-20">
         <div className="max-w-6xl mx-auto px-6">
 
           {loading ? (
             <div className="text-center text-slate-700 text-xl">
-              Loading announcements...
+              جاري تحميل الإعلانات...
             </div>
           ) : announcements.length === 0 ? (
 
@@ -118,11 +117,11 @@ export default function AnnouncementsPage() {
               </div>
 
               <h2 className="text-2xl font-bold text-slate-900 mb-3">
-                No announcements available
+                لا توجد إعلانات حاليًا
               </h2>
 
               <p className="text-gray-600">
-                New announcements will appear here soon.
+                ستظهر الإعلانات الجديدة هنا قريبًا.
               </p>
 
             </div>
@@ -138,14 +137,17 @@ export default function AnnouncementsPage() {
                   className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition duration-300"
                 >
 
-                  {/* Image */}
+                  {/* ================= IMAGE ================= */}
 
                   {announcement.image ? (
                     <div className="w-full bg-gray-100">
 
                       <img
                         src={announcement.image}
-                        alt={announcement.titleEn}
+                        alt={
+                          announcement.titleAr ||
+                          "إعلان"
+                        }
                         className="w-full h-64 object-cover"
                       />
 
@@ -161,7 +163,7 @@ export default function AnnouncementsPage() {
                         </div>
 
                         <p>
-                          No image
+                          لا توجد صورة
                         </p>
 
                       </div>
@@ -169,11 +171,11 @@ export default function AnnouncementsPage() {
                     </div>
                   )}
 
-                  {/* Content */}
+                  {/* ================= CONTENT ================= */}
 
                   <div className="p-6">
 
-                    {/* Date */}
+                    {/* التاريخ */}
 
                     {announcement.date && (
                       <div className="text-blue-600 font-semibold mb-3">
@@ -181,16 +183,16 @@ export default function AnnouncementsPage() {
                       </div>
                     )}
 
-                    {/* Title */}
+                    {/* العنوان */}
 
                     <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                      {announcement.titleEn}
+                      {announcement.titleAr}
                     </h2>
 
-                    {/* Description */}
+                    {/* الوصف */}
 
-                    <p className="text-gray-600 leading-7">
-                      {announcement.descriptionEn}
+                    <p className="text-gray-600 leading-8">
+                      {announcement.descriptionAr}
                     </p>
 
                   </div>
@@ -206,15 +208,15 @@ export default function AnnouncementsPage() {
         </div>
       </section>
 
-      {/* Back Home */}
+      {/* ================= BACK HOME ================= */}
 
       <section className="bg-slate-950 py-12 text-center">
 
         <Link
-          href="/en"
+          href="/ar"
           className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl transition"
         >
-          Back to Home
+          العودة إلى الصفحة الرئيسية
         </Link>
 
       </section>
